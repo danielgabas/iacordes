@@ -6,14 +6,15 @@
 // Si cambiás algo en index.html, subí el número de CACHE_VERSION para que el
 // celular descargue la nueva versión.
 
-const CACHE_VERSION = 'iacordes-v1';
+const CACHE_VERSION = 'iacordes-v2';
 const CORE_ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
-  './icon-maskable-512.png'
+  './icon-maskable-512.png',
+  './biblioteca.json'
 ];
 
 // --- INSTALL: cacheá los archivos esenciales ---

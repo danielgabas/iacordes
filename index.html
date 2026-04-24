@@ -150,6 +150,114 @@
   .icon-btn { background: transparent; border: 1px solid var(--line); color: var(--ink-soft); border-radius: 6px; padding: 5px 8px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 11px; transition: all .15s; line-height: 1; }
   .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+
+  /* ───── Biblioteca de libros ───── */
+  .books-lib { position: absolute; inset: 0; background: var(--paper); z-index: 15; display: none; flex-direction: column; }
+  .books-lib.open { display: flex; }
+  .books-lib-bar { display: flex; align-items: center; gap: 10px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--bg); flex-shrink: 0; flex-wrap: wrap; }
+  .books-lib-title { font-family: 'Fraunces', serif; font-variation-settings: "opsz" 144, "wght" 500; font-style: italic; font-size: 20px; margin-right: auto; }
+  .books-lib-title::first-letter { color: var(--accent); }
+  .books-lib-search { padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--ink); font-family: 'IBM Plex Mono', monospace; font-size: 12px; outline: none; width: 220px; transition: border-color .2s; }
+  .books-lib-search:focus { border-color: var(--accent); }
+  .books-lib-add { flex-shrink: 0; padding: 7px 16px; border-radius: 999px; background: var(--accent); color: #fff; border: none; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .08em; cursor: pointer; transition: all .15s; }
+  .books-lib-add:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(184,69,30,.3); }
+  .books-lib-load { flex-shrink: 0; padding: 7px 14px; border-radius: 999px; background: transparent; color: var(--ink-soft); border: 1px solid var(--line); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .08em; cursor: pointer; transition: all .15s; }
+  .books-lib-load:hover { border-color: var(--accent); color: var(--accent); }
+  .books-lib-tabs { display: flex; gap: 4px; padding: 10px 24px 0; border-bottom: 1px solid var(--line); flex-shrink: 0; background: var(--bg); overflow-x: auto; }
+  .books-lib-tab { background: none; border: none; padding: 8px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all .15s; white-space: nowrap; }
+  .books-lib-tab:hover { color: var(--ink); }
+  .books-lib-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .books-lib-tab .tab-count { opacity: .55; font-size: 10px; margin-left: 4px; }
+  .books-lib-body { flex: 1; overflow-y: auto; padding: 20px 24px 60px; position: relative; }
+  .books-lib-empty { text-align: center; padding: 60px 20px; color: var(--ink-faint); font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.8; }
+  .books-lib-empty h3 { font-family: 'Fraunces', serif; font-variation-settings: "opsz" 144, "wght" 400; font-style: italic; font-size: 28px; color: var(--ink-soft); margin: 0 0 12px; }
+  .books-lib-empty .empty-load-btn { margin-top: 22px; background: var(--accent); color: #fff; border: none; padding: 13px 26px; border-radius: 999px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; transition: transform .15s, box-shadow .15s; box-shadow: 0 4px 16px rgba(184,69,30,.25); }
+  .books-lib-empty .empty-load-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(184,69,30,.35); }
+  .books-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .book-card { background: var(--bg-alt); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; cursor: pointer; transition: all .15s; display: flex; flex-direction: column; gap: 6px; position: relative; }
+  .book-card:hover { transform: translateY(-1px); box-shadow: 0 4px 16px var(--shadow); border-color: var(--accent-soft); }
+  .book-card-badges { position: absolute; top: 10px; right: 10px; display: flex; gap: 4px; }
+  .book-card-badge { font-size: 13px; line-height: 1; opacity: .85; }
+  .book-card-title { font-family: 'Fraunces', serif; font-variation-settings: "opsz" 24, "wght" 500; font-size: 16px; line-height: 1.3; color: var(--ink); padding-right: 44px; }
+  .book-card-author { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); letter-spacing: .02em; }
+  .book-card-resena { font-family: 'Fraunces', serif; font-size: 12.5px; color: var(--ink-faint); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; font-style: italic; margin-top: 2px; }
+  .book-card-meta { display: flex; gap: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--line); }
+  .book-card.wishlist { border-style: dashed; background: transparent; }
+
+  /* Drop zone dentro de la biblioteca */
+  .books-lib-body.drag-over::after { content: "Soltá el archivo biblioteca.json"; position: absolute; inset: 20px; border: 3px dashed var(--accent); border-radius: 16px; background: rgba(184,69,30,.08); display: flex; align-items: center; justify-content: center; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: var(--accent); pointer-events: none; z-index: 5; }
+
+  /* Modal detalle de libro */
+  .book-detail-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 700; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .book-detail-backdrop.visible { display: flex; }
+  .book-detail { background: var(--paper); border-radius: 14px; padding: 0; width: min(560px, 100%); max-height: 92vh; box-shadow: 0 20px 60px var(--shadow); display: flex; flex-direction: column; overflow: hidden; }
+  .book-detail-header { padding: 20px 24px 14px; border-bottom: 1px solid var(--line); display: flex; align-items: flex-start; gap: 10px; flex-shrink: 0; }
+  .book-detail-header-text { flex: 1; min-width: 0; }
+  .book-detail-header h3 { font-family: 'Fraunces', serif; font-variation-settings: "opsz" 144, "wght" 500; font-style: italic; font-size: 22px; margin: 0 0 4px; color: var(--ink); line-height: 1.25; word-wrap: break-word; }
+  .book-detail-header .author { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-soft); }
+  .book-detail-close { background: none; border: none; font-size: 20px; color: var(--ink-faint); cursor: pointer; padding: 4px 8px; line-height: 1; }
+  .book-detail-close:hover { color: var(--accent); }
+  .book-detail-body { flex: 1; overflow-y: auto; padding: 18px 24px; }
+  .book-detail-section { margin-bottom: 18px; }
+  .book-detail-section-label { font-family: 'IBM Plex Mono', monospace; font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 6px; }
+  .book-detail-section p { font-family: 'Fraunces', serif; font-size: 14.5px; color: var(--ink); margin: 0; line-height: 1.55; }
+  .book-detail-section p.resena { font-style: italic; color: var(--ink-soft); }
+  .book-detail-input, .book-detail-textarea { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg-alt); color: var(--ink); font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; outline: none; transition: border-color .15s; }
+  .book-detail-input:focus, .book-detail-textarea:focus { border-color: var(--accent); }
+  .book-detail-textarea { min-height: 80px; resize: vertical; line-height: 1.5; font-family: 'Fraunces', serif; font-size: 14px; }
+  .book-detail-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .book-detail-checks { display: flex; gap: 16px; flex-wrap: wrap; }
+  .book-detail-check { display: flex; align-items: center; gap: 8px; font-family: 'IBM Plex Mono', monospace; font-size: 12px; cursor: pointer; user-select: none; }
+  .book-detail-check input { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+  .book-detail-actions { padding: 14px 24px; border-top: 1px solid var(--line); display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; flex-shrink: 0; }
+  .book-detail-btn { padding: 9px 18px; border-radius: 999px; border: none; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .06em; cursor: pointer; transition: all .15s; }
+  .book-detail-btn-primary { background: var(--accent); color: #fff; }
+  .book-detail-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(184,69,30,.3); }
+  .book-detail-btn-ghost { background: transparent; color: var(--ink-soft); border: 1px solid var(--line); }
+  .book-detail-btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .book-detail-btn-danger { background: transparent; color: #c0392b; border: 1px solid #c0392b44; margin-right: auto; }
+  .book-detail-btn-danger:hover { background: #c0392b; color: #fff; }
+
+
+  /* Vista agrupada por autor */
+  .books-lib-view-toggle { flex-shrink: 0; padding: 7px 14px; border-radius: 999px; background: transparent; color: var(--ink-soft); border: 1px solid var(--line); font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .08em; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+  .books-lib-view-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .books-lib-view-toggle.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .books-groups { display: flex; flex-direction: column; gap: 4px; }
+  .book-group { border-bottom: 1px solid var(--line); }
+  .book-group-header { display: flex; align-items: center; gap: 10px; padding: 10px 8px; cursor: pointer; user-select: none; transition: background .12s; border-radius: 6px; }
+  .book-group-header:hover { background: var(--bg-alt); }
+  .book-group-toggle { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-faint); width: 14px; text-align: center; transition: transform .15s; flex-shrink: 0; }
+  .book-group.expanded .book-group-toggle { transform: rotate(90deg); }
+  .book-group-author { font-family: 'Fraunces', serif; font-variation-settings: "opsz" 32, "wght" 500; font-size: 17px; color: var(--ink); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .book-group-count { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-faint); letter-spacing: .08em; flex-shrink: 0; }
+  .book-group-body { display: none; padding: 6px 0 14px 24px; }
+  .book-group.expanded .book-group-body { display: block; }
+  .book-group-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-left: 2px solid var(--line); margin-left: 4px; cursor: pointer; transition: all .12s; border-radius: 0 8px 8px 0; }
+  .book-group-item:hover { background: var(--bg-alt); border-left-color: var(--accent-soft); }
+  .book-group-item-main { flex: 1; min-width: 0; }
+  .book-group-item-title { font-family: 'Fraunces', serif; font-size: 14.5px; font-variation-settings: "opsz" 18, "wght" 400; color: var(--ink); line-height: 1.35; }
+  .book-group-item-meta { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-faint); letter-spacing: .05em; margin-top: 3px; }
+  .book-group-item-resena { font-family: 'Fraunces', serif; font-size: 12.5px; color: var(--ink-faint); line-height: 1.45; margin-top: 4px; font-style: italic; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .book-group-item-badges { flex-shrink: 0; display: flex; gap: 4px; font-size: 12px; padding-top: 2px; opacity: .85; }
+  .books-groups-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 0 4px 10px; }
+  .books-groups-actions button { background: none; border: none; font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); cursor: pointer; padding: 4px 8px; transition: color .12s; }
+  .books-groups-actions button:hover { color: var(--accent); }
+
+  /* Botón destacado en home */
+  .home-extras { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
+  .home-btn-library { margin-top: 0; background: transparent; color: var(--accent); border: 1.5px solid var(--accent); padding: 12px 24px; border-radius: 999px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 8px; }
+  .home-btn-library:hover { background: var(--accent); color: #fff; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(184,69,30,.3); }
+
+  @media (max-width: 700px) {
+    .books-lib-bar { padding: 10px 14px; }
+    .books-lib-title { font-size: 17px; flex-basis: 100%; margin-bottom: 2px; }
+    .books-lib-search { width: 100%; }
+    .books-lib-body { padding: 14px 14px 60px; }
+    .books-grid { grid-template-columns: 1fr; gap: 10px; }
+    .book-detail-row { grid-template-columns: 1fr; }
+  }
+
   /* Settings panel (slides over sidebar) */
   .settings-panel { position: absolute; inset: 0; background: var(--bg-alt); z-index: 10; display: flex; flex-direction: column; transform: translateX(-100%); transition: transform .25s ease; }
   .settings-panel.open { transform: translateX(0); }
@@ -530,6 +638,7 @@
     <div class="sidebar-footer">
       <span class="count" id="count">0 canciones</span>
       <button class="icon-btn" id="libraryBtn" title="Vista biblioteca">⊞</button>
+      <button class="icon-btn" id="booksBtn" title="Biblioteca de libros">📚</button>
       <button class="icon-btn" id="themeBtn" title="Tema">◐</button>
       <button class="icon-btn" id="settingsBtn" title="Configuración">⚙</button>
       <button class="icon-btn" id="loadBtn">cargar</button>
@@ -611,8 +720,28 @@
       <div class="empty" id="empty">
         <h2>Sin canciones todavía</h2>
         <p>Corré <code>scraper.py</code> para generar <code>canciones.json</code> y cargalo acá. También podés arrastrar el archivo sobre esta ventana.</p>
-        <button class="big-btn" id="emptyLoadBtn">Cargar canciones.json</button>
+        <div class="home-extras">
+          <button class="big-btn" id="emptyLoadBtn" style="margin-top:0">Cargar canciones.json</button>
+          <button class="home-btn-library" id="emptyBooksBtn">📚 Mi biblioteca de libros</button>
+        </div>
       </div>
+    </div>
+        <!-- Biblioteca de libros -->
+    <div class="books-lib" id="booksLib">
+      <div class="books-lib-bar">
+        <span class="books-lib-title">Biblioteca</span>
+        <input type="text" class="books-lib-search" id="booksSearch" placeholder="buscar título, autor, reseña...">
+        <button class="books-lib-view-toggle active" id="booksViewToggle" title="Alternar vista agrupada/grilla">▾ por autor</button>
+        <button class="books-lib-load" id="booksLoadBtn">cargar</button>
+        <button class="books-lib-add" id="booksAddBtn">+ agregar</button>
+        <button class="icon-btn" id="booksClose">✕ cerrar</button>
+        <input type="file" id="booksFileInput" accept=".json" style="display:none">
+      </div>
+      <div class="books-lib-tabs" id="booksTabs">
+        <button class="books-lib-tab active" data-tab="todos">Todos <span class="tab-count" id="cntTodos"></span></button>
+        <button class="books-lib-tab" data-tab="deseados">Deseados <span class="tab-count" id="cntDeseados"></span></button>
+      </div>
+      <div class="books-lib-body" id="booksBody"></div>
     </div>
     <div class="chord-panel" id="chordPanel"></div>
   </main>
@@ -2289,6 +2418,49 @@
   </div>
 </div>
 
+
+<!-- Book Detail Modal -->
+<div class="book-detail-backdrop" id="bookDetailBackdrop">
+  <div class="book-detail" id="bookDetail">
+    <div class="book-detail-header">
+      <div class="book-detail-header-text">
+        <h3 id="bdTitle">—</h3>
+        <div class="author" id="bdAuthor">—</div>
+      </div>
+      <button class="book-detail-close" id="bdClose">✕</button>
+    </div>
+    <div class="book-detail-body">
+      <div class="book-detail-section" id="bdResenaSection">
+        <div class="book-detail-section-label">Reseña</div>
+        <p class="resena" id="bdResena">—</p>
+      </div>
+      <div class="book-detail-section">
+        <div class="book-detail-section-label">Ubicación y edición</div>
+        <div class="book-detail-row">
+          <input class="book-detail-input" id="bdEstante" placeholder="Estante" type="text">
+          <input class="book-detail-input" id="bdPosicion" placeholder="Posición" type="number" min="0">
+          <input class="book-detail-input" id="bdEditorial" placeholder="Editorial">
+        </div>
+      </div>
+      <div class="book-detail-section">
+        <div class="book-detail-section-label">Estado</div>
+        <div class="book-detail-checks">
+          <label class="book-detail-check"><input type="checkbox" id="bdDeseado"> Lista de deseados</label>
+        </div>
+      </div>
+      <div class="book-detail-section">
+        <div class="book-detail-section-label">Mis notas</div>
+        <textarea class="book-detail-textarea" id="bdNotas" placeholder="Notas personales, cuándo lo leíste, citas favoritas..."></textarea>
+      </div>
+    </div>
+    <div class="book-detail-actions">
+      <button class="book-detail-btn book-detail-btn-danger" id="bdDelete">Eliminar</button>
+      <button class="book-detail-btn book-detail-btn-ghost" id="bdCancel">Cancelar</button>
+      <button class="book-detail-btn book-detail-btn-primary" id="bdSave">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
   import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -2301,7 +2473,8 @@
   const SYNC_KEYS = [
     'cc_songs', 'cc_categories', 'cc_songCats',
     'cc_theme', 'cc_font', 'cc_instrument',
-    'cc_diagrams', 'cc_twoCol', 'cc_customChords'
+    'cc_diagrams', 'cc_twoCol', 'cc_customChords',
+    'cc_library'
   ];
 
   const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -2550,6 +2723,456 @@
       });
     });
   }
+</script>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════════
+   iAcordes · Módulo Biblioteca de Libros
+   Funciona igual que el módulo de canciones:
+   - Datos en localStorage bajo 'cc_library'
+   - Primera vez: empty state con botón para cargar biblioteca.json
+   - Se sincroniza por Supabase igual que cc_songs
+   ══════════════════════════════════════════════════════════════════════════ */
+(function() {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const LS = window.LS || {
+    load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+    save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+  };
+
+  // ─── Estado ───
+  let books = [];
+  let currentTab = 'todos';
+  let currentSearch = '';
+  let editingBook = null;
+  let groupedView = true;          // default: vista agrupada por autor
+  let expandedAuthors = new Set(); // siempre arranca vacío (todos cerrados)
+
+  // ─── Persistencia ───
+  function loadBooks() {
+    const stored = LS.load('cc_library', null);
+    books = (stored && Array.isArray(stored)) ? stored : [];
+  }
+
+  function saveBooks() {
+    LS.save('cc_library', books);
+  }
+
+  // ─── Normalizar libro proveniente de un JSON externo ───
+  function normalizeBook(raw, idx) {
+    return {
+      id: raw.id || ('b' + Date.now().toString(36) + '_' + idx),
+      titulo: raw.titulo || raw.title || '',
+      autor: raw.autor || raw.author || '',
+      estante: raw.estante != null ? raw.estante : '',
+      posicion: raw.posicion != null ? raw.posicion : null,
+      editorial: raw.editorial || '',
+      resena: raw.resena || raw.reseña || raw.descripcion || '',
+      leido: !!raw.leido,
+      favorito: !!raw.favorito,
+      deseado: !!raw.deseado,
+      notas: raw.notas || ''
+    };
+  }
+
+  // ─── Cargar desde archivo JSON (igual que canciones) ───
+  function handleFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const data = JSON.parse(e.target.result);
+        let rawList = [];
+        if (Array.isArray(data)) rawList = data;
+        else if (data.libros) rawList = data.libros;
+        else if (data.books) rawList = data.books;
+        else throw new Error('Formato no reconocido (se esperaba array o {libros:[]})');
+
+        if (!rawList.length) { alert('El archivo no tiene libros.'); return; }
+
+        // Merge con los existentes (preservar estado personal de libros con mismo id)
+        const byId = {};
+        books.forEach(b => { byId[b.id] = b; });
+
+        const merged = rawList.map((raw, i) => {
+          const nb = normalizeBook(raw, i);
+          const existing = byId[nb.id];
+          if (existing) {
+            // Conservar flags personales
+            nb.leido = existing.leido;
+            nb.favorito = existing.favorito;
+            nb.deseado = existing.deseado;
+            nb.notas = existing.notas || nb.notas;
+          }
+          return nb;
+        });
+
+        // Agregar los que estaban en local pero no en el archivo (libros agregados a mano)
+        const incomingIds = new Set(merged.map(b => b.id));
+        const extras = books.filter(b => !incomingIds.has(b.id));
+
+        books = merged.concat(extras);
+        saveBooks();
+        renderBooks();
+        alert(`${merged.length} libros cargados${extras.length ? ' (+' + extras.length + ' locales conservados)' : ''}.`);
+      } catch (err) {
+        alert('Error al leer el archivo: ' + err.message);
+      }
+    };
+    reader.onerror = () => alert('Error al leer el archivo');
+    reader.readAsText(file);
+  }
+
+  // ─── Filtrado y render ───
+  function filteredBooks() {
+    const q = currentSearch.trim().toLowerCase();
+    let list = books.slice();
+    if (currentTab === 'deseados')        list = list.filter(b => b.deseado);
+    else                                  list = list.filter(b => !b.deseado);
+    if (q) {
+      list = list.filter(b => {
+        const hay = (b.titulo + ' ' + b.autor + ' ' + (b.resena || '') + ' ' + (b.notas || '') + ' ' + (b.editorial || '')).toLowerCase();
+        return hay.includes(q);
+      });
+    }
+    list.sort((a, b) => {
+      const aA = (a.autor || '').toLowerCase();
+      const bA = (b.autor || '').toLowerCase();
+      if (aA !== bA) return aA < bA ? -1 : 1;
+      const aT = (a.titulo || '').toLowerCase();
+      const bT = (b.titulo || '').toLowerCase();
+      return aT < bT ? -1 : aT > bT ? 1 : 0;
+    });
+    return list;
+  }
+
+  function updateCounts() {
+    $('cntTodos').textContent    = books.filter(b => !b.deseado).length;
+    $('cntDeseados').textContent = books.filter(b => b.deseado).length;
+  }
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function renderBooks() {
+    updateCounts();
+    const body = $('booksBody');
+    // Empty state global (sin libros en total)
+    if (books.length === 0) {
+      body.innerHTML =
+        '<div class="books-lib-empty">' +
+          '<h3>Sin libros todavía</h3>' +
+          '<p>Cargá <code>biblioteca.json</code> para traer los 419 libros de tu biblioteca.<br>' +
+          'También podés arrastrar el archivo acá mismo, o agregar libros de a uno con <strong>+ agregar</strong>.</p>' +
+          '<button class="empty-load-btn" id="bookEmptyLoadBtn">Cargar biblioteca.json</button>' +
+        '</div>';
+      $('bookEmptyLoadBtn').addEventListener('click', () => $('booksFileInput').click());
+      return;
+    }
+    const list = filteredBooks();
+    if (list.length === 0) {
+      body.innerHTML = '<div class="books-lib-empty">' +
+        (currentSearch
+          ? 'Sin resultados para "' + esc(currentSearch) + '"'
+          : (currentTab === 'deseados'
+              ? 'No tenés libros en la lista de deseados todavía.<br>Tocá <strong>+ agregar</strong> y marcá la casilla "lista de deseados".'
+              : 'No hay libros en esta vista.')) +
+        '</div>';
+      return;
+    }
+    if (groupedView) {
+      renderGrouped(list, body);
+    } else {
+      renderGrid(list, body);
+    }
+  }
+
+  function renderGrid(list, body) {
+    const htmlArr = ['<div class="books-grid">'];
+    for (const b of list) {
+      const ubi = (b.estante || b.posicion != null)
+        ? `Estante ${esc(b.estante)}${b.posicion != null ? ' · pos ' + esc(b.posicion) : ''}`
+        : (b.deseado ? 'Deseado' : 'Sin ubicación');
+      const ed = b.editorial ? ' · ' + esc(b.editorial) : '';
+      htmlArr.push(
+        `<div class="book-card${b.deseado ? ' wishlist' : ''}" data-id="${esc(b.id)}">` +
+          `<div class="book-card-title">${esc(b.titulo || '(sin título)')}</div>` +
+          `<div class="book-card-author">${esc(b.autor || '—')}</div>` +
+          (b.resena ? `<div class="book-card-resena">${esc(b.resena)}</div>` : '') +
+          `<div class="book-card-meta"><span>${ubi}${ed}</span></div>` +
+        '</div>'
+      );
+    }
+    htmlArr.push('</div>');
+    body.innerHTML = htmlArr.join('');
+    body.querySelectorAll('.book-card').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = el.getAttribute('data-id');
+        const book = books.find(b => b.id === id);
+        if (book) openDetail(book);
+      });
+    });
+  }
+
+  function renderGrouped(list, body) {
+    // Agrupar por autor
+    const groups = new Map();
+    for (const b of list) {
+      const key = (b.autor || '—').trim() || '—';
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(b);
+    }
+    // Ordenar autores alfabéticamente
+    const sorted = Array.from(groups.keys()).sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase(), 'es'));
+
+    const searching = currentSearch.trim().length > 0;
+    const htmlArr = [
+      '<div class="books-groups-actions">',
+        '<button id="btnExpandAll">Expandir todos</button>',
+        '<button id="btnCollapseAll">Colapsar todos</button>',
+      '</div>',
+      '<div class="books-groups">'
+    ];
+    for (const autor of sorted) {
+      // Si hay búsqueda activa, expandir automáticamente los matches
+      const expanded = searching || expandedAuthors.has(autor);
+      const items = groups.get(autor);
+      // Ordenar libros dentro del autor por título
+      items.sort((a, b) => (a.titulo || '').toLowerCase().localeCompare((b.titulo || '').toLowerCase(), 'es'));
+
+      htmlArr.push(
+        `<div class="book-group${expanded ? ' expanded' : ''}" data-author="${esc(autor)}">`,
+          `<div class="book-group-header">`,
+            `<span class="book-group-toggle">▶</span>`,
+            `<span class="book-group-author">${esc(autor)}</span>`,
+            `<span class="book-group-count">${items.length} ${items.length === 1 ? 'libro' : 'libros'}</span>`,
+          `</div>`,
+          `<div class="book-group-body">`
+      );
+      for (const b of items) {
+        const ubi = (b.estante || b.posicion != null)
+          ? `Estante ${esc(b.estante)}${b.posicion != null ? ' · pos ' + esc(b.posicion) : ''}`
+          : (b.deseado ? 'Deseado' : '—');
+        const ed = b.editorial ? ' · ' + esc(b.editorial) : '';
+        htmlArr.push(
+          `<div class="book-group-item" data-id="${esc(b.id)}">`,
+            `<div class="book-group-item-main">`,
+              `<div class="book-group-item-title">${esc(b.titulo || '(sin título)')}</div>`,
+              `<div class="book-group-item-meta">${ubi}${ed}</div>`,
+              (b.resena ? `<div class="book-group-item-resena">${esc(b.resena)}</div>` : ''),
+            `</div>`,
+          `</div>`
+        );
+      }
+      htmlArr.push('</div></div>');
+    }
+    htmlArr.push('</div>');
+    body.innerHTML = htmlArr.join('');
+
+    // Toggle grupo (click en el header)
+    body.querySelectorAll('.book-group-header').forEach(h => {
+      h.addEventListener('click', () => {
+        const group = h.parentElement;
+        const autor = group.getAttribute('data-author');
+        const isExpanded = group.classList.toggle('expanded');
+        if (isExpanded) expandedAuthors.add(autor);
+        else expandedAuthors.delete(autor);
+      });
+    });
+
+    // Click en item abre el detalle
+    body.querySelectorAll('.book-group-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const id = el.getAttribute('data-id');
+        const book = books.find(b => b.id === id);
+        if (book) openDetail(book);
+      });
+    });
+
+    // Expandir / colapsar todos
+    const btnExp = $('btnExpandAll');
+    const btnCol = $('btnCollapseAll');
+    if (btnExp) btnExp.addEventListener('click', () => {
+      expandedAuthors = new Set(sorted);
+      renderBooks();
+    });
+    if (btnCol) btnCol.addEventListener('click', () => {
+      expandedAuthors.clear();
+      renderBooks();
+    });
+  }
+
+  // ─── Detalle ───
+  function openDetail(book) {
+    editingBook = book;
+    $('bdTitle').textContent = book.titulo || '(sin título)';
+    $('bdAuthor').textContent = book.autor || '—';
+    $('bdResena').textContent = book.resena || '(sin reseña)';
+    $('bdResenaSection').style.display = book.resena ? '' : 'none';
+    $('bdEstante').value = book.estante == null ? '' : book.estante;
+    $('bdPosicion').value = book.posicion == null ? '' : book.posicion;
+    $('bdEditorial').value = book.editorial || '';
+    $('bdDeseado').checked = !!book.deseado;
+    $('bdNotas').value = book.notas || '';
+    $('bookDetailBackdrop').classList.add('visible');
+  }
+
+  function openAdd() {
+    const titulo = prompt('Título del libro:');
+    if (!titulo || !titulo.trim()) return;
+    const autor = prompt('Autor:') || '';
+    const deseado = confirm('¿Es un libro que querés leer (deseado)?\n\nAceptar = Deseado · Cancelar = Ya lo tengo');
+    const nuevo = {
+      id: 'b' + Date.now().toString(36),
+      titulo: titulo.trim(), autor: autor.trim(),
+      estante: '', posicion: null, editorial: '',
+      resena: '', leido: false, favorito: false,
+      deseado: !!deseado, notas: ''
+    };
+    books.push(nuevo);
+    saveBooks();
+    currentTab = deseado ? 'deseados' : 'todos';
+    document.querySelectorAll('.books-lib-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === currentTab);
+    });
+    renderBooks();
+    setTimeout(() => openDetail(nuevo), 150);
+  }
+
+  function saveDetail() {
+    if (!editingBook) return;
+    const estante = $('bdEstante').value.trim();
+    const posStr = $('bdPosicion').value.trim();
+    editingBook.estante = estante === '' ? '' : (isNaN(+estante) ? estante : +estante);
+    editingBook.posicion = posStr === '' ? null : +posStr;
+    editingBook.editorial = $('bdEditorial').value.trim();
+    editingBook.deseado = $('bdDeseado').checked;
+    editingBook.notas = $('bdNotas').value.trim();
+    saveBooks();
+    closeDetail();
+    renderBooks();
+  }
+
+  function deleteDetail() {
+    if (!editingBook) return;
+    if (!confirm(`¿Eliminar "${editingBook.titulo}"?\nEsto no se puede deshacer.`)) return;
+    books = books.filter(b => b.id !== editingBook.id);
+    saveBooks();
+    closeDetail();
+    renderBooks();
+  }
+
+  function closeDetail() {
+    editingBook = null;
+    $('bookDetailBackdrop').classList.remove('visible');
+  }
+
+  function openBooksLib() {
+    $('booksLib').classList.add('open');
+    expandedAuthors.clear();  // todo cerrado al abrir
+    renderBooks();
+    setTimeout(() => { try { $('booksSearch').focus(); } catch {} }, 100);
+  }
+  function closeBooksLib() { $('booksLib').classList.remove('open'); }
+
+  // ─── Drag & drop sobre el body de la biblioteca ───
+  function setupDnD() {
+    const body = $('booksBody');
+    body.addEventListener('dragover', e => {
+      e.preventDefault();
+      body.classList.add('drag-over');
+    });
+    body.addEventListener('dragleave', e => {
+      if (e.target === body) body.classList.remove('drag-over');
+    });
+    body.addEventListener('drop', e => {
+      e.preventDefault();
+      body.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file && file.name.endsWith('.json')) handleFile(file);
+    });
+  }
+
+  // ─── Bindings ───
+  function bind() {
+    $('booksBtn') && $('booksBtn').addEventListener('click', openBooksLib);
+    $('emptyBooksBtn') && $('emptyBooksBtn').addEventListener('click', openBooksLib);
+    $('booksClose').addEventListener('click', closeBooksLib);
+    $('booksAddBtn').addEventListener('click', openAdd);
+    $('booksViewToggle').addEventListener('click', () => {
+      groupedView = !groupedView;
+      const btn = $('booksViewToggle');
+      btn.classList.toggle('active', groupedView);
+      btn.textContent = groupedView ? '▾ por autor' : '▦ grilla';
+      // Al cambiar a agrupada, todo cerrado
+      if (groupedView) expandedAuthors.clear();
+      renderBooks();
+    });
+    $('booksLoadBtn').addEventListener('click', () => $('booksFileInput').click());
+    $('booksFileInput').addEventListener('change', e => {
+      if (e.target.files[0]) handleFile(e.target.files[0]);
+      e.target.value = '';  // permitir re-seleccionar el mismo archivo
+    });
+
+    $('booksSearch').addEventListener('input', e => {
+      currentSearch = e.target.value;
+      renderBooks();
+    });
+
+    document.querySelectorAll('.books-lib-tab').forEach(t => {
+      t.addEventListener('click', () => {
+        currentTab = t.dataset.tab;
+        document.querySelectorAll('.books-lib-tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        renderBooks();
+      });
+    });
+
+    $('bdClose').addEventListener('click', closeDetail);
+    $('bdCancel').addEventListener('click', closeDetail);
+    $('bdSave').addEventListener('click', saveDetail);
+    $('bdDelete').addEventListener('click', deleteDetail);
+    $('bookDetailBackdrop').addEventListener('click', e => {
+      if (e.target.id === 'bookDetailBackdrop') closeDetail();
+    });
+
+    document.addEventListener('keydown', e => {
+      if ($('booksLib').classList.contains('open')) {
+        if (e.key === 'Escape') {
+          if ($('bookDetailBackdrop').classList.contains('visible')) closeDetail();
+          else closeBooksLib();
+        }
+      }
+    });
+
+    // Refrescar vista cuando el sync de Supabase reescriba cc_library
+    window.addEventListener('storage', e => {
+      if (e.key === 'cc_library') {
+        loadBooks();
+        if ($('booksLib').classList.contains('open')) renderBooks();
+      }
+    });
+
+    setupDnD();
+  }
+
+  function init() {
+    loadBooks();
+    bind();
+    window.__iAcordesBooks = {
+      reload() { loadBooks(); if ($('booksLib').classList.contains('open')) renderBooks(); },
+      state: () => ({ count: books.length, tab: currentTab })
+    };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
 </script>
 </body>
 </html>
