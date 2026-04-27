@@ -6,7 +6,7 @@
 // Si cambiás algo en index.html, subí el número de CACHE_VERSION para que el
 // celular descargue la nueva versión.
 
-const CACHE_VERSION = 'iacordes-v4';
+const CACHE_VERSION = 'iacordes-v5';
 const CORE_ASSETS = [
   './',
   './index.html',

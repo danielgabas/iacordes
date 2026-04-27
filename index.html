@@ -149,6 +149,8 @@
   .sidebar-footer .count { flex: 1; }
   .icon-btn { background: transparent; border: 1px solid var(--line); color: var(--ink-soft); border-radius: 6px; padding: 5px 8px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 11px; transition: all .15s; line-height: 1; }
   .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .icon-btn.active-mode { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .icon-btn.active-mode:hover { background: var(--accent); color: #fff; opacity: .9; }
 
 
   /* ───── Biblioteca de libros ───── */
@@ -3090,11 +3092,15 @@
 
   function openBooksLib() {
     $('booksLib').classList.add('open');
+    $('booksBtn') && $('booksBtn').classList.add('active-mode');
     expandedAuthors.clear();  // todo cerrado al abrir
     renderBooks();
     setTimeout(() => { try { $('booksSearch').focus(); } catch {} }, 100);
   }
-  function closeBooksLib() { $('booksLib').classList.remove('open'); }
+  function closeBooksLib() {
+    $('booksLib').classList.remove('open');
+    $('booksBtn') && $('booksBtn').classList.remove('active-mode');
+  }
 
   // ─── Drag & drop sobre el body de la biblioteca ───
   function setupDnD() {
@@ -3116,7 +3122,11 @@
 
   // ─── Bindings ───
   function bind() {
-    $('booksBtn') && $('booksBtn').addEventListener('click', openBooksLib);
+    $('booksBtn') && $('booksBtn').addEventListener('click', () => {
+      // Toggle: si está abierta, cerrar; si está cerrada, abrir
+      if ($('booksLib').classList.contains('open')) closeBooksLib();
+      else openBooksLib();
+    });
     $('emptyBooksBtn') && $('emptyBooksBtn').addEventListener('click', openBooksLib);
     $('booksClose').addEventListener('click', closeBooksLib);
     $('booksAddBtn').addEventListener('click', openAdd);
