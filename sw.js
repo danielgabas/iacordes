@@ -6,7 +6,7 @@
 // Si cambiás algo en index.html, subí el número de CACHE_VERSION para que el
 // celular descargue la nueva versión.
 
-const CACHE_VERSION = 'iacordes-v5';
+const CACHE_VERSION = 'iacordes-v7';
 const CORE_ASSETS = [
   './',
   './index.html',
@@ -16,6 +16,14 @@ const CORE_ASSETS = [
   './icon-maskable-512.png',
   './biblioteca.json'
 ];
+
+// --- MESSAGE: la app pregunta la versión para mostrarla en Configuración ---
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'GET_VERSION') {
+    const port = event.ports && event.ports[0];
+    if (port) port.postMessage({ version: CACHE_VERSION });
+  }
+});
 
 // --- INSTALL: cacheá los archivos esenciales ---
 self.addEventListener('install', event => {
