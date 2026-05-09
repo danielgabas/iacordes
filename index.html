@@ -350,11 +350,10 @@
     .chord-popup { max-width: calc(100vw - 20px); }
     .load-modal { width: calc(100vw - 32px); }
 
-    /* Panel lateral de acordes en mobile: más angosto para no tapar letras */
-    .chord-panel { width: 58px; padding: 8px 2px 40px; }
-    .chord-panel-item { margin-bottom: 10px; }
-    .chord-panel-name { font-size: 8px; }
-    .reader.panel-open { padding-right: calc(58px + 10px); }
+    /* Ocultar panel lateral de acordes en mobile: quita demasiado espacio */
+    .chord-panel,
+    .chord-panel.open { display: none !important; }
+    .reader.panel-open { padding-right: 16px; }
 
     /* Menú TONO/DIAGR./TEXTO/COLS./INSTR. - ampliado para celulares */
     .sidebar-controls { padding: 12px 16px; gap: 8px; }
@@ -1472,11 +1471,36 @@
     return null;
   }
 
+  // ── Preferencias por canción (transpose, fontSize) ─────────────────────────
+  function songKey(song) {
+    if (!song) return '';
+    return song.url || ((song.titulo || '') + '|' + (song.artista || ''));
+  }
+  function loadSongPrefs(song) {
+    const all = LS.load('cc_song_prefs', {});
+    return all[songKey(song)] || {};
+  }
+  function saveSongPref(song, key, value) {
+    if (!song) return;
+    const all = LS.load('cc_song_prefs', {});
+    const k = songKey(song);
+    const prev = all[k] || {};
+    prev[key] = value;
+    all[k] = prev;
+    LS.save('cc_song_prefs', all);
+  }
+  function currentSong() {
+    return state.currentIndex >= 0 ? state.songs[state.currentIndex] : null;
+  }
+
   // ── Reader ─────────────────────────────────────────────────────────────────
   function selectSong(index) {
     if (index < 0 || index >= state.songs.length) return;
-    state.currentIndex = index; state.transpose = 0;
-    updateTransposeLabel(); renderReader(); renderSongList();
+    state.currentIndex = index;
+    const prefs = loadSongPrefs(state.songs[index]);
+    state.transpose = typeof prefs.transpose === 'number' ? prefs.transpose : 0;
+    state.fontSize = typeof prefs.fontSize === 'number' ? prefs.fontSize : LS.load('cc_font', 15);
+    updateTransposeLabel(); updateFontLabel(); renderReader(); renderSongList();
     const mobileTitleEl = $('mobileSongTitle');
     if (mobileTitleEl) mobileTitleEl.textContent = state.songs[index].titulo || '';
   }
@@ -1831,10 +1855,10 @@
 
   // ── Event listeners ────────────────────────────────────────────────────────
   search.addEventListener('input', applySearch);
-  $('transUp').addEventListener('click', () => { if (state.currentIndex<0) return; state.transpose=Math.max(-11,Math.min(11,state.transpose+1)); updateTransposeLabel(); renderReader(); });
-  $('transDown').addEventListener('click', () => { if (state.currentIndex<0) return; state.transpose=Math.max(-11,Math.min(11,state.transpose-1)); updateTransposeLabel(); renderReader(); });
-  $('fontUp').addEventListener('click', () => { state.fontSize=Math.min(28,state.fontSize+1); updateFontLabel(); LS.save('cc_font',state.fontSize); renderReader(); });
-  $('fontDown').addEventListener('click', () => { state.fontSize=Math.max(10,state.fontSize-1); updateFontLabel(); LS.save('cc_font',state.fontSize); renderReader(); });
+  $('transUp').addEventListener('click', () => { if (state.currentIndex<0) return; state.transpose=Math.max(-11,Math.min(11,state.transpose+1)); updateTransposeLabel(); renderReader(); saveSongPref(currentSong(), 'transpose', state.transpose); });
+  $('transDown').addEventListener('click', () => { if (state.currentIndex<0) return; state.transpose=Math.max(-11,Math.min(11,state.transpose-1)); updateTransposeLabel(); renderReader(); saveSongPref(currentSong(), 'transpose', state.transpose); });
+  $('fontUp').addEventListener('click', () => { state.fontSize=Math.min(28,state.fontSize+1); updateFontLabel(); LS.save('cc_font',state.fontSize); renderReader(); saveSongPref(currentSong(), 'fontSize', state.fontSize); });
+  $('fontDown').addEventListener('click', () => { state.fontSize=Math.max(10,state.fontSize-1); updateFontLabel(); LS.save('cc_font',state.fontSize); renderReader(); saveSongPref(currentSong(), 'fontSize', state.fontSize); });
   $('themeBtn').addEventListener('click', () => { state.theme=state.theme==='light'?'dark':'light'; applyTheme(); });
   function showUrlModal() {
     $('urlStep1').style.display = ''; $('urlStep2').style.display = 'none';
