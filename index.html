@@ -855,6 +855,7 @@
   <div class="drop-zone-inner">soltá el JSON acá</div>
 </div>
 
+<script src="version.js"></script>
 <script>
 (function() {
   "use strict";
@@ -1953,26 +1954,13 @@
   });
   $('guitarBtn').addEventListener('click', () => { state.instrument='guitar'; $('guitarBtn').classList.add('active'); $('pianoBtn').classList.remove('active'); LS.save('cc_instrument','guitar'); if (pop.el&&pop.el.classList.contains('visible')) drawPopup(); });
   $('pianoBtn').addEventListener('click', () => { state.instrument='piano'; $('pianoBtn').classList.add('active'); $('guitarBtn').classList.remove('active'); LS.save('cc_instrument','piano'); if (pop.el&&pop.el.classList.contains('visible')) drawPopup(); });
-  $('settingsBtn').addEventListener('click', () => { $('settingsPanel').classList.add('open'); renderCatList(); renderColorPicker(); renderShapePickerNew(); refreshAppVersion(); });
+  // APP_VERSION viene de version.js (único lugar donde se define)
+  { const v = $('settingsVersion'); if (v) v.textContent = `versión ${self.APP_VERSION}`; }
 
-  function refreshAppVersion() {
-    const el = $('settingsVersion');
-    if (!el) return;
-    if (!('serviceWorker' in navigator)) { el.textContent = 'versión — (SW no soportado)'; return; }
-    navigator.serviceWorker.getRegistration().then(reg => {
-      const sw = reg && (reg.active || reg.waiting || reg.installing);
-      if (!sw) { el.textContent = 'versión — (no instalada)'; return; }
-      const channel = new MessageChannel();
-      const timer = setTimeout(() => { el.textContent = 'versión —'; }, 1500);
-      channel.port1.onmessage = e => {
-        clearTimeout(timer);
-        const v = e.data && e.data.version;
-        el.textContent = v ? `versión ${v}` : 'versión —';
-      };
-      try { sw.postMessage({ type: 'GET_VERSION' }, [channel.port2]); }
-      catch { clearTimeout(timer); el.textContent = 'versión —'; }
-    }).catch(() => { el.textContent = 'versión —'; });
-  }
+  $('settingsBtn').addEventListener('click', () => {
+    $('settingsPanel').classList.add('open');
+    renderCatList(); renderColorPicker(); renderShapePickerNew();
+  });
   $('settingsClose').addEventListener('click', () => $('settingsPanel').classList.remove('open'));
   $('catAddBtn').addEventListener('click', addCategory);
   $('catNameInput').addEventListener('keydown', e => { if (e.key==='Enter') addCategory(); });

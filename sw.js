@@ -3,27 +3,21 @@
 // gigante, así que cachearla = tenerla offline). Las fuentes de Google se
 // cachean con stale-while-revalidate.
 //
-// Si cambiás algo en index.html, subí el número de CACHE_VERSION para que el
-// celular descargue la nueva versión.
+// La versión vive en version.js (único lugar). Cambiar el string ahí dispara
+// la actualización del SW (porque importScripts ve los bytes nuevos).
 
-const CACHE_VERSION = 'iacordes-v7';
+importScripts('./version.js');
+const CACHE_VERSION = self.APP_VERSION;
 const CORE_ASSETS = [
   './',
   './index.html',
+  './version.js',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
   './icon-maskable-512.png',
   './biblioteca.json'
 ];
-
-// --- MESSAGE: la app pregunta la versión para mostrarla en Configuración ---
-self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'GET_VERSION') {
-    const port = event.ports && event.ports[0];
-    if (port) port.postMessage({ version: CACHE_VERSION });
-  }
-});
 
 // --- INSTALL: cacheá los archivos esenciales ---
 self.addEventListener('install', event => {
