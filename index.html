@@ -7,6 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#b8451e">
+<meta name="color-scheme" content="light dark">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
@@ -17,15 +18,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT@0,9..144,300..900,0..100;1,9..144,300..900,0..100&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
+    color-scheme: light;
     --bg: #f4ede0; --bg-alt: #ece3d2; --paper: #faf5ea;
     --ink: #231913; --ink-soft: #5a463a; --ink-faint: #8b7766;
-    --accent: #b8451e; --accent-soft: #d2784e; --chord: #2563eb;
+    --accent: #b8451e; --accent-soft: #d2784e; --chord: #15803d;
     --line: rgba(35,25,19,.12); --shadow: rgba(35,25,19,.08);
   }
   [data-theme="dark"] {
+    color-scheme: dark;
     --bg: #1a1410; --bg-alt: #221a14; --paper: #0f0a07;
     --ink: #ede2cd; --ink-soft: #c0b09a; --ink-faint: #8a7866;
-    --accent: #e78b5f; --accent-soft: #d2784e; --chord: #60a5fa;
+    --accent: #e78b5f; --accent-soft: #d2784e; --chord: #4ade80;
     --line: rgba(237,226,205,.12); --shadow: rgba(0,0,0,.4);
   }
   * { box-sizing: border-box; }
@@ -33,7 +36,7 @@
   body {
     font-family: 'Fraunces', Georgia, serif;
     font-variation-settings: "opsz" 14, "SOFT" 50;
-    background: var(--bg); color: var(--ink); font-size: 16px; line-height: 1.5;
+    background: var(--bg); color: var(--ink); font-size: 17px; line-height: 1.5;
     -webkit-font-smoothing: antialiased; transition: background .3s, color .3s;
   }
 
@@ -316,7 +319,7 @@
   .song-meta a { color: var(--ink-faint); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); }
   .song-meta a:hover { color: var(--accent); border-color: var(--accent); }
   .key-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 1px solid var(--accent); color: var(--accent); border-radius: 999px; font-size: 11px; }
-  .song-content { font-family: 'IBM Plex Mono', monospace; font-size: var(--reader-font,15px); line-height: 1.55; white-space: pre; color: var(--ink); overflow-x: auto; padding-bottom: 40vh; }
+  .song-content { font-family: 'IBM Plex Mono', monospace; font-size: var(--reader-font,17px); line-height: 1.55; white-space: pre; color: var(--ink); overflow-x: auto; padding-bottom: 40vh; }
   .song-content .chord { color: var(--chord); font-weight: 700; cursor: pointer; }
   .song-content .chord:hover { text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
 
@@ -337,15 +340,29 @@
   .sidebar-overlay.visible { display: block; pointer-events: auto; }
 
   /* Mobile */
-  @media (max-width: 840px) {
+  /* Mobile: width angosta (portrait) o height baja (landscape de celular).
+     Sin la condición de altura, los celulares modernos en landscape (ej. 932×430)
+     caen en layout desktop y queda inutilizable. */
+  @media (max-width: 840px), (max-height: 500px) {
     .app { grid-template-columns: 1fr; }
     .sidebar { position: fixed; inset: 0; z-index: 50; transform: translateX(-100%); transition: transform .25s ease; width: 88%; max-width: 360px; box-shadow: 4px 0 24px var(--shadow); }
     .sidebar.open { transform: translateX(0); }
-    .mobile-toolbar { display: flex !important; }
-    .reader { padding: 20px 16px 100px; }
+    .mobile-toolbar { display: flex !important; padding-right: 56px; }
+    .reader { padding: 20px 16px 40px; }
     .two-col-wrap { grid-template-columns: 1fr; gap: 0; }
-    .autoscroll-fab { bottom: 80px; }
-    .autoscroll-speed-panel { bottom: 136px; }
+    /* FAB de autoscroll: en mobile va arriba a la derecha (en el toolbar)
+       para no tapar las letras de la canción */
+    .autoscroll-fab {
+      top: 8px; right: 12px; bottom: auto;
+      width: 34px; height: 34px; font-size: 15px;
+      box-shadow: 0 2px 10px rgba(184,69,30,.35);
+    }
+    .autoscroll-speed-panel {
+      top: 52px; right: 8px; bottom: auto;
+      flex-direction: row; gap: 4px;
+      background: var(--paper); padding: 5px;
+      border-radius: 10px; box-shadow: 0 4px 14px var(--shadow);
+    }
     .song-title { font-size: clamp(24px,7vw,38px) !important; }
     .chord-popup { max-width: calc(100vw - 20px); }
     .load-modal { width: calc(100vw - 32px); }
@@ -861,12 +878,16 @@
 
   const state = {
     songs: [], filtered: [], currentIndex: -1,
-    transpose: 0, fontSize: 15, theme: 'light', instrument: 'guitar',
+    transpose: 0, fontSize: 17, theme: 'light', instrument: 'guitar',
     viewMode: 'all', showDiagrams: false, twoCol: false,
     categories: [],
     songCats: {},
     collapsed: {},
   };
+
+  // Igual que el media query CSS: ancho angosto OR altura baja (landscape de celu)
+  const isMobile = () => isMobile() || window.innerHeight <= 500;
+  window.isMobile = isMobile;
 
   const LS = {
     load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
@@ -1344,7 +1365,7 @@
         ${song.artista ? `<p class="song-item-artist">${escapeHTML(song.artista)}</p>` : ''}
       </div>
       <button class="cat-dot-btn${cats.length ? '' : ' no-cats'}" title="Categorías">${dotsHTML || '<span style="font-size:9px;color:var(--ink-faint);font-family:\'IBM Plex Mono\',monospace">+</span>'}</button>`;
-    el.querySelector('.song-item-info').addEventListener('click', () => { selectSong(idx); if (window.innerWidth <= 840) closeSidebar(); });
+    el.querySelector('.song-item-info').addEventListener('click', () => { selectSong(idx); if (isMobile()) closeSidebar(); });
     el.querySelector('.cat-dot-btn').addEventListener('click', e => { e.stopPropagation(); showCatPicker(song, e.currentTarget); });
     return el;
   }
@@ -1499,7 +1520,7 @@
     state.currentIndex = index;
     const prefs = loadSongPrefs(state.songs[index]);
     state.transpose = typeof prefs.transpose === 'number' ? prefs.transpose : 0;
-    state.fontSize = typeof prefs.fontSize === 'number' ? prefs.fontSize : LS.load('cc_font', 15);
+    state.fontSize = typeof prefs.fontSize === 'number' ? prefs.fontSize : LS.load('cc_font', 17);
     updateTransposeLabel(); updateFontLabel(); renderReader(); renderSongList();
     const mobileTitleEl = $('mobileSongTitle');
     if (mobileTitleEl) mobileTitleEl.textContent = state.songs[index].titulo || '';
@@ -1547,7 +1568,7 @@
         search.value = artistBtn.dataset.artist;
         setViewMode('all');
         applySearch();
-        if (window.innerWidth <= 840) openSidebar();
+        if (isMobile()) openSidebar();
       });
     }
   }
@@ -1849,7 +1870,7 @@
     state.filtered = [...state.songs];
     applySearch();
     selectSong(0);
-    if (window.innerWidth <= 840) closeSidebar();
+    if (isMobile()) closeSidebar();
     openEdit(true);
   }
 
@@ -1974,7 +1995,7 @@
     if (!pool.length) { alert('No hay canciones categorizadas todavía.'); return; }
     const pick = pool[Math.floor(Math.random() * pool.length)];
     selectSong(state.songs.indexOf(pick));
-    if (window.innerWidth <= 840) closeSidebar();
+    if (isMobile()) closeSidebar();
   });
   $('guitarBtn').addEventListener('click', () => { state.instrument='guitar'; $('guitarBtn').classList.add('active'); $('pianoBtn').classList.remove('active'); LS.save('cc_instrument','guitar'); if (pop.el&&pop.el.classList.contains('visible')) drawPopup(); });
   $('pianoBtn').addEventListener('click', () => { state.instrument='piano'; $('pianoBtn').classList.add('active'); $('guitarBtn').classList.remove('active'); LS.save('cc_instrument','piano'); if (pop.el&&pop.el.classList.contains('visible')) drawPopup(); });
@@ -2015,7 +2036,7 @@
     libArtistExpanded.clear();
     updateLibDeleteBtn();
     renderLibrary();
-    if (window.innerWidth <= 840) closeSidebar();
+    if (isMobile()) closeSidebar();
   }
   function closeLibrary() { library.classList.remove('open'); libSelected.clear(); }
 
@@ -2282,7 +2303,7 @@
 
   // ── Init ───────────────────────────────────────────────────────────────────
   state.theme = LS.load('cc_theme','light');
-  state.fontSize = LS.load('cc_font',15);
+  state.fontSize = LS.load('cc_font',17);
   state.instrument = LS.load('cc_instrument','guitar');
   state.showDiagrams = LS.load('cc_diagrams', false);
   if (state.showDiagrams) { $('diagBtn').textContent='on'; $('diagBtn').classList.add('on'); }
