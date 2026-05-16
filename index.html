@@ -19,10 +19,10 @@
 <style>
   :root {
     color-scheme: light;
-    --bg: #f4ede0; --bg-alt: #ece3d2; --paper: #faf5ea;
-    --ink: #231913; --ink-soft: #5a463a; --ink-faint: #8b7766;
+    --bg: #ffffff; --bg-alt: #f4f4f5; --paper: #ffffff;
+    --ink: #18181b; --ink-soft: #52525b; --ink-faint: #8a8a92;
     --accent: #b8451e; --accent-soft: #d2784e; --chord: #15803d;
-    --line: rgba(35,25,19,.12); --shadow: rgba(35,25,19,.08);
+    --line: rgba(0,0,0,.10); --shadow: rgba(0,0,0,.06);
   }
   [data-theme="dark"] {
     color-scheme: dark;
@@ -132,6 +132,18 @@
 
   /* Sidebar controls */
   .sidebar-controls { border-top: 1px solid var(--line); padding: 6px 14px; display: flex; flex-direction: column; gap: 3px; flex-shrink: 0; background: var(--bg); }
+  /* Popup de controles per-canción: aparece sobre el reader al apretar ⚙.
+     Pequeño y posicionado arriba a la izquierda, así el reader queda visible
+     y los cambios de tono/fuente se ven en vivo. */
+  .song-controls {
+    display: none; flex-wrap: wrap; gap: 10px 18px; align-items: center;
+    position: fixed; top: 64px; left: 16px; z-index: 60;
+    background: var(--paper); border: 1px solid var(--line); border-radius: 12px;
+    padding: 12px 14px; box-shadow: 0 8px 28px var(--shadow);
+    max-width: calc(100vw - 32px);
+  }
+  .song-controls.open { display: inline-flex; }
+  .song-controls .ctrl-label { width: auto; }
   .ctrl-pair { display: flex; gap: 6px; }
   .ctrl-pair .ctrl-row { flex: 1; min-width: 0; }
   .ctrl-row { display: flex; align-items: center; gap: 5px; }
@@ -315,11 +327,14 @@
   .reader { flex: 1; overflow-y: auto; padding: 48px min(8vw,64px) 120px; background: radial-gradient(circle at 12% 8%, rgba(184,69,30,.04), transparent 45%), radial-gradient(circle at 92% 90%, rgba(184,69,30,.03), transparent 45%), var(--paper); scroll-behavior: smooth; }
   .song-header { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--line); }
   .song-title { font-family: 'Fraunces', serif; font-variation-settings: "opsz" 144, "SOFT" 100, "wght" 600; font-size: clamp(32px,5vw,52px); line-height: 1.05; letter-spacing: -.025em; margin: 0 0 10px; color: var(--ink); }
+  /* Botón de autoscroll dentro del mobile-toolbar (fijo arriba en mobile) */
+  .toolbar-autoscroll-btn { flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: var(--accent); color: #fff; border: none; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(184,69,30,.35); padding: 0; }
+  .toolbar-autoscroll-btn:active { transform: scale(.95); }
   .song-meta { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
   .song-meta a { color: var(--ink-faint); text-decoration: none; border-bottom: 1px dotted var(--ink-faint); }
   .song-meta a:hover { color: var(--accent); border-color: var(--accent); }
   .key-pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 1px solid var(--accent); color: var(--accent); border-radius: 999px; font-size: 11px; }
-  .song-content { font-family: 'IBM Plex Mono', monospace; font-size: var(--reader-font,17px); line-height: 1.55; white-space: pre; color: var(--ink); overflow-x: auto; padding-bottom: 40vh; }
+  .song-content { font-family: 'IBM Plex Mono', monospace; font-size: var(--reader-font,17px); line-height: 1.55; white-space: pre; color: var(--ink); overflow-x: auto; padding-bottom: 40vh; width: fit-content; max-width: 100%; margin-left: auto; margin-right: auto; }
   .song-content .chord { color: var(--chord); font-weight: 700; cursor: pointer; }
   .song-content .chord:hover { text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; }
 
@@ -347,30 +362,26 @@
     .app { grid-template-columns: 1fr; }
     .sidebar { position: fixed; inset: 0; z-index: 50; transform: translateX(-100%); transition: transform .25s ease; width: 88%; max-width: 360px; box-shadow: 4px 0 24px var(--shadow); }
     .sidebar.open { transform: translateX(0); }
-    .mobile-toolbar { display: flex !important; padding-right: 56px; }
+    .mobile-toolbar { display: flex !important; }
     .reader { padding: 20px 16px 40px; }
     .two-col-wrap { grid-template-columns: 1fr; gap: 0; }
-    /* FAB de autoscroll: en mobile va arriba a la derecha (en el toolbar)
-       para no tapar las letras de la canción */
-    .autoscroll-fab {
-      top: 8px; right: 12px; bottom: auto;
-      width: 34px; height: 34px; font-size: 15px;
-      box-shadow: 0 2px 10px rgba(184,69,30,.35);
-    }
-    .autoscroll-speed-panel {
-      top: 52px; right: 8px; bottom: auto;
-      flex-direction: row; gap: 4px;
-      background: var(--paper); padding: 5px;
-      border-radius: 10px; box-shadow: 0 4px 14px var(--shadow);
-    }
+    /* Sin FAB de autoscroll en mobile: ocupa lugar y tapa contenido. */
+    .autoscroll-fab,
+    .autoscroll-speed-panel { display: none !important; }
     .song-title { font-size: clamp(24px,7vw,38px) !important; }
     .chord-popup { max-width: calc(100vw - 20px); }
     .load-modal { width: calc(100vw - 32px); }
 
-    /* Ocultar panel lateral de acordes en mobile: quita demasiado espacio */
+    /* Ocultar panel lateral de acordes en mobile: quita demasiado espacio.
+       !important porque la regla desktop (más abajo en el source) gana por
+       especificidad igual + orden si no se fuerza. */
     .chord-panel,
     .chord-panel.open { display: none !important; }
-    .reader.panel-open { padding-right: 16px; }
+    .reader.panel-open { padding-right: 16px !important; }
+
+    /* En mobile, las líneas largas envuelven en lugar de cortarse a la derecha.
+       Pre-wrap conserva los espacios (alineación acorde/letra) y agrega wrap. */
+    .song-content { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: hidden; }
 
     /* Menú TONO/DIAGR./TEXTO/COLS./INSTR. - ampliado para celulares */
     .sidebar-controls { padding: 12px 16px; gap: 8px; }
@@ -633,47 +644,6 @@
 
     <div class="song-list" id="songList"></div>
 
-    <div class="sidebar-controls">
-      <div class="ctrl-pair">
-        <div class="ctrl-row">
-          <span class="ctrl-label">TONO</span>
-          <div class="ctrl-group">
-            <button id="transDown">−</button>
-            <span class="ctrl-val" id="transLabel">0</span>
-            <button id="transUp">+</button>
-          </div>
-        </div>
-        <div class="ctrl-row">
-          <span class="ctrl-label">DIAGR.</span>
-          <button class="toggle-btn" id="diagBtn">off</button>
-        </div>
-      </div>
-      <div class="ctrl-pair">
-        <div class="ctrl-row">
-          <span class="ctrl-label">TEXTO</span>
-          <div class="ctrl-group">
-            <button id="fontDown">A−</button>
-            <span class="ctrl-val" id="fontLabel">15px</span>
-            <button id="fontUp">A+</button>
-          </div>
-        </div>
-        <div class="ctrl-row">
-          <span class="ctrl-label">COLS.</span>
-          <div class="ctrl-group">
-            <button id="col1Btn" class="active">1</button>
-            <button id="col2Btn">2</button>
-          </div>
-        </div>
-      </div>
-      <div class="ctrl-row">
-        <span class="ctrl-label">INSTR.</span>
-        <div class="instrument-group">
-          <button id="guitarBtn" class="active">guitar</button>
-          <button id="pianoBtn">piano</button>
-        </div>
-      </div>
-    </div>
-
     <div class="sidebar-footer">
       <span class="count" id="count">0 canciones</span>
       <button class="icon-btn" id="libraryBtn" title="Vista biblioteca">⊞</button>
@@ -706,10 +676,50 @@
 
   <div class="sidebar-overlay" id="overlay"></div>
 
+  <!-- Controles por canción: viven aquí mientras no haya canción visible;
+       en cada renderReader se transplantan dentro del .song-meta. -->
+  <div class="song-controls" id="songControls">
+    <div class="ctrl-row">
+      <span class="ctrl-label">TONO</span>
+      <div class="ctrl-group">
+        <button id="transDown">−</button>
+        <span class="ctrl-val" id="transLabel">0</span>
+        <button id="transUp">+</button>
+      </div>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">DIAGR.</span>
+      <button class="toggle-btn" id="diagBtn">off</button>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">TEXTO</span>
+      <div class="ctrl-group">
+        <button id="fontDown">A−</button>
+        <span class="ctrl-val" id="fontLabel">15px</span>
+        <button id="fontUp">A+</button>
+      </div>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">COLS.</span>
+      <div class="ctrl-group">
+        <button id="col1Btn" class="active">1</button>
+        <button id="col2Btn">2</button>
+      </div>
+    </div>
+    <div class="ctrl-row">
+      <span class="ctrl-label">INSTR.</span>
+      <div class="instrument-group">
+        <button id="guitarBtn" class="active">guitar</button>
+        <button id="pianoBtn">piano</button>
+      </div>
+    </div>
+  </div>
+
   <main class="main">
     <div class="mobile-toolbar" id="mobileToolbar">
       <button class="icon-btn" id="menuBtn">☰</button>
       <span class="song-title-mini" id="mobileSongTitle"></span>
+      <button class="toolbar-autoscroll-btn" id="toolbarAutoscrollBtn" title="Autoscroll">▶</button>
     </div>
     <!-- Library view -->
     <div class="library" id="library">
@@ -848,6 +858,7 @@
       <div class="url-modal-sources">
         <button class="url-source-btn" id="urlSrcFile"><span class="url-source-icon">📂</span>Archivo JSON</button>
         <button class="url-source-btn" id="urlSrcUrl"><span class="url-source-icon">🔗</span>Desde URL</button>
+        <button class="url-source-btn" id="urlSrcLaCuerda"><span class="url-source-icon">🔍</span>Buscar en LaCuerda</button>
       </div>
       <div class="url-modal-actions" style="margin-top:6px">
         <button class="url-cancel-btn" id="urlModalCancel">cancelar</button>
@@ -862,6 +873,22 @@
       <div class="url-modal-actions">
         <button class="url-cancel-btn" id="urlStep2Cancel">cancelar</button>
         <button class="url-fetch-btn" id="urlFetchGo">cargar</button>
+      </div>
+    </div>
+    <!-- Step 3: LaCuerda search -->
+    <div id="urlStep3" style="display:none">
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <input class="url-input" id="lcSearchInput" type="text" placeholder="Artista o canción…" style="flex:1" />
+        <button class="url-fetch-btn" id="lcSearchGo">buscar</button>
+      </div>
+      <div id="lcResults" style="max-height:340px;overflow-y:auto;border:1px solid var(--line);border-radius:8px;background:var(--bg-alt);padding:6px;min-height:60px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft)">
+        <p style="margin:8px;color:var(--ink-faint);font-size:10px">Buscá un artista o canción en lacuerda.net.</p>
+      </div>
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--ink-faint);margin:8px 0 0;line-height:1.5">
+        Usa proxy CORS. Click en un artista para ver sus canciones, luego click en una canción para importarla.
+      </p>
+      <div class="url-modal-actions" style="margin-top:10px">
+        <button class="url-cancel-btn" id="urlStep3Cancel">cerrar</button>
       </div>
     </div>
   </div>
@@ -886,7 +913,7 @@
   };
 
   // Igual que el media query CSS: ancho angosto OR altura baja (landscape de celu)
-  const isMobile = () => isMobile() || window.innerHeight <= 500;
+  const isMobile = () => window.innerWidth <= 840 || window.innerHeight <= 500;
   window.isMobile = isMobile;
 
   const LS = {
@@ -1349,6 +1376,16 @@
   }
   function hideCatPicker() { catPicker.classList.remove('visible'); }
   document.addEventListener('click', e => { if (!catPicker.contains(e.target) && !e.target.closest('.cat-dot-btn')) hideCatPicker(); });
+  // Cerrar popup de ajustes al clickear afuera o presionar Esc.
+  document.addEventListener('click', e => {
+    const sc = $('songControls');
+    if (sc && sc.classList.contains('open') && !sc.contains(e.target) && !e.target.closest('#songSettingsBtn')) {
+      sc.classList.remove('open');
+    }
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { const sc = $('songControls'); if (sc) sc.classList.remove('open'); }
+  });
 
   // ── Song list rendering ────────────────────────────────────────────────────
   function makeSongItem(song) {
@@ -1365,7 +1402,9 @@
         ${song.artista ? `<p class="song-item-artist">${escapeHTML(song.artista)}</p>` : ''}
       </div>
       <button class="cat-dot-btn${cats.length ? '' : ' no-cats'}" title="Categorías">${dotsHTML || '<span style="font-size:9px;color:var(--ink-faint);font-family:\'IBM Plex Mono\',monospace">+</span>'}</button>`;
-    el.querySelector('.song-item-info').addEventListener('click', () => { selectSong(idx); if (isMobile()) closeSidebar(); });
+    // Click en TODO el item (no sólo en .song-item-info), salvo el botón de
+    // categorías que ya hace stopPropagation. Así no importa dónde caiga el tap.
+    el.addEventListener('click', () => selectSong(idx));
     el.querySelector('.cat-dot-btn').addEventListener('click', e => { e.stopPropagation(); showCatPicker(song, e.currentTarget); });
     return el;
   }
@@ -1518,12 +1557,17 @@
   function selectSong(index) {
     if (index < 0 || index >= state.songs.length) return;
     state.currentIndex = index;
+    const sc = $('songControls'); if (sc) sc.classList.remove('open');
     const prefs = loadSongPrefs(state.songs[index]);
     state.transpose = typeof prefs.transpose === 'number' ? prefs.transpose : 0;
     state.fontSize = typeof prefs.fontSize === 'number' ? prefs.fontSize : LS.load('cc_font', 17);
     updateTransposeLabel(); updateFontLabel(); renderReader(); renderSongList();
+    reader.scrollTop = 0;  // sólo al cambiar de canción, no en re-renders in-place
     const mobileTitleEl = $('mobileSongTitle');
     if (mobileTitleEl) mobileTitleEl.textContent = state.songs[index].titulo || '';
+    // Cerrar sidebar siempre tras elegir canción. En desktop es no-op
+    // (la sidebar es columna, no overlay), en mobile cierra el overlay.
+    closeSidebar();
   }
 
   function renderReader() {
@@ -1534,6 +1578,7 @@
       autoscrollFab.classList.remove('visible');
       autoscrollSpeedPanel.classList.remove('visible');
       renderChordPanel(null);
+      const sc = $('songControls'); if (sc) sc.classList.remove('open');
       return;
     }
     emptyEl.style.display = 'none';
@@ -1554,14 +1599,19 @@
           ${detectedKey ? `<span class="key-auto">clave: <strong>${escapeHTML(detectedKey)}</strong></span>` : ''}
           ${song.url ? `<a href="${escapeHTML(song.url)}" target="_blank" rel="noopener">ver original ↗</a>` : ''}
           ${(song.titulo||song.artista) ? `<a href="https://www.youtube.com/results?search_query=${encodeURIComponent((song.artista+' '+song.titulo+' cover').trim())}" target="_blank" rel="noopener" class="yt-search-link">▶ YouTube</a>` : ''}
+          <button class="song-edit-btn" id="songSettingsBtn" title="Ajustes (tono, fuente…)">⚙ ajustes</button>
           <button class="song-edit-btn" id="songEditBtn">✎ editar</button>
         </div>
       </header>
       ${embedHtml}
       ${buildContentHTML(song.contenido||'', diagClass)}`;
-    reader.scrollTop = 0;
     renderChordPanel(song);
     document.getElementById('songEditBtn').addEventListener('click', openEdit);
+    document.getElementById('songSettingsBtn').addEventListener('click', e => {
+      e.stopPropagation();
+      const sc = $('songControls');
+      if (sc) sc.classList.toggle('open');
+    });
     const artistBtn = view.querySelector('.artist-filter-btn');
     if (artistBtn) {
       artistBtn.addEventListener('click', () => {
@@ -1858,9 +1908,12 @@
     autoscrollSpeedPanel.querySelectorAll('.asp-btn').forEach((b, i) => b.classList.toggle('active', i === scrollSpeedIdx));
   }
   function restartScroll() { clearInterval(scrollTimer); scrollTimer = setInterval(() => { reader.scrollBy(0, SCROLL_SPEEDS[scrollSpeedIdx].px); if (reader.scrollTop + reader.clientHeight >= reader.scrollHeight - 4) stopAutoscroll(); }, 16); }
-  function startAutoscroll() { isScrolling = true; autoscrollFab.innerHTML = '⏸'; autoscrollSpeedPanel.classList.add('visible'); restartScroll(); }
-  function stopAutoscroll() { isScrolling = false; clearInterval(scrollTimer); scrollTimer = null; autoscrollFab.innerHTML = '▶'; autoscrollSpeedPanel.classList.remove('visible'); }
+  function setAutoIcon(icon) { autoscrollFab.innerHTML = icon; const tb = document.getElementById('toolbarAutoscrollBtn'); if (tb) tb.innerHTML = icon; }
+  function startAutoscroll() { isScrolling = true; setAutoIcon('⏸'); autoscrollSpeedPanel.classList.add('visible'); restartScroll(); }
+  function stopAutoscroll() { isScrolling = false; clearInterval(scrollTimer); scrollTimer = null; setAutoIcon('▶'); autoscrollSpeedPanel.classList.remove('visible'); }
   autoscrollFab.addEventListener('click', () => { isScrolling ? stopAutoscroll() : startAutoscroll(); });
+  const tbAutoBtn = $('toolbarAutoscrollBtn');
+  if (tbAutoBtn) tbAutoBtn.addEventListener('click', () => { isScrolling ? stopAutoscroll() : startAutoscroll(); });
 
   // ── New song ───────────────────────────────────────────────────────────────
   function openNewSong(prefill = {}) {
@@ -1890,13 +1943,161 @@
   function urlGoStep(n) {
     $('urlStep1').style.display = n===1 ? '' : 'none';
     $('urlStep2').style.display = n===2 ? '' : 'none';
+    $('urlStep3').style.display = n===3 ? '' : 'none';
   }
   $('urlSrcFile').addEventListener('click', () => { hideUrlModal(); $('fileInput').click(); });
   $('urlSrcUrl').addEventListener('click', () => { urlGoStep(2); $('urlInput').focus(); });
+  $('urlSrcLaCuerda').addEventListener('click', () => { urlGoStep(3); $('lcSearchInput').focus(); });
   $('urlModalCancel').addEventListener('click', hideUrlModal);
   $('urlStep2Cancel').addEventListener('click', hideUrlModal);
+  $('urlStep3Cancel').addEventListener('click', hideUrlModal);
   $('urlModalBackdrop').addEventListener('click', e => { if (e.target === $('urlModalBackdrop')) hideUrlModal(); });
   $('urlInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('urlFetchGo').click(); });
+  $('lcSearchInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('lcSearchGo').click(); });
+
+  // ── Buscador de LaCuerda ───────────────────────────────────────────────────
+  const PROXIES = [
+    u => `https://corsproxy.io/?url=${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  ];
+  async function fetchViaProxy(url, timeout=10000) {
+    for (const src of [u => u, ...PROXIES]) {
+      try {
+        const r = await fetch(src(url), { signal: AbortSignal.timeout(timeout) });
+        if (r.ok) return await r.text();
+      } catch { continue; }
+    }
+    throw new Error('No se pudo acceder a ' + url);
+  }
+  function lcResultLine(label, onClick, sub='') {
+    const d = document.createElement('div');
+    d.style.cssText = 'padding:7px 10px;border-radius:6px;cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;gap:8px';
+    d.innerHTML = `<span>${escapeHTML(label)}</span>${sub?`<span style="font-size:9px;color:var(--ink-faint)">${escapeHTML(sub)}</span>`:''}`;
+    d.addEventListener('mouseenter', () => d.style.background = 'var(--paper)');
+    d.addEventListener('mouseleave', () => d.style.background = '');
+    d.addEventListener('click', onClick);
+    return d;
+  }
+  async function lcDoSearch() {
+    const q = $('lcSearchInput').value.trim();
+    if (!q) return;
+    const results = $('lcResults');
+    results.innerHTML = '<p style="margin:8px;color:var(--ink-faint);font-size:10px">Buscando…</p>';
+    try {
+      const html = await fetchViaProxy('https://acordes.lacuerda.net/buscar/?q=' + encodeURIComponent(q));
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const artists = [];
+      const seen = new Set();
+      doc.querySelectorAll('a[href]').forEach(a => {
+        let href = a.getAttribute('href') || '';
+        if (href.startsWith('//')) href = 'https:' + href;
+        else if (href.startsWith('/')) href = 'https://acordes.lacuerda.net' + href;
+        else if (!href.startsWith('http')) return;
+        try {
+          const u = new URL(href);
+          if (u.hostname !== 'acordes.lacuerda.net') return;
+          const path = u.pathname.replace(/^\/|\/$/g, '');
+          if (path && !path.includes('/') && /^[a-z0-9_]+$/.test(path) && !seen.has(path)) {
+            seen.add(path);
+            artists.push({ slug: path, name: a.textContent.trim() || path.replace(/_/g,' ') });
+          }
+        } catch {}
+      });
+      results.innerHTML = '';
+      if (!artists.length) {
+        results.innerHTML = '<p style="margin:8px;color:var(--ink-faint);font-size:10px">Sin resultados.</p>';
+        return;
+      }
+      const header = document.createElement('p');
+      header.style.cssText = 'margin:4px 8px 8px;font-size:9px;color:var(--ink-faint);letter-spacing:.1em;text-transform:uppercase';
+      header.textContent = `Artistas (${artists.length}) — click para ver canciones`;
+      results.appendChild(header);
+      artists.forEach(art => {
+        results.appendChild(lcResultLine(art.name, () => lcShowArtistSongs(art)));
+      });
+    } catch(e) {
+      results.innerHTML = `<p style="margin:8px;color:#c0392b;font-size:10px">Error: ${escapeHTML(e.message)}</p>`;
+    }
+  }
+  async function lcShowArtistSongs(art) {
+    const results = $('lcResults');
+    results.innerHTML = `<p style="margin:8px;color:var(--ink-faint);font-size:10px">Cargando canciones de ${escapeHTML(art.name)}…</p>`;
+    try {
+      const html = await fetchViaProxy('https://acordes.lacuerda.net/' + art.slug + '/');
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const songs = [];
+      const seen = new Set();
+      doc.querySelectorAll('a[href]').forEach(a => {
+        const href = (a.getAttribute('href') || '').trim();
+        const text = a.textContent.trim();
+        if (!text || href.startsWith('http') || href.startsWith('/') || href.startsWith('#') || href.startsWith('javascript:')) return;
+        // slugs simples sin / o .shtml
+        if (!/^[a-z0-9_-]+$/.test(href)) return;
+        if (seen.has(href)) return;
+        seen.add(href);
+        // limpiar sufijo " acordes"
+        const clean = text.replace(/\s+acordes\s*$/i, '').trim();
+        songs.push({ slug: href, title: clean, url: 'https://acordes.lacuerda.net/' + art.slug + '/' + href });
+      });
+      results.innerHTML = '';
+      const back = document.createElement('div');
+      back.style.cssText = 'padding:6px 10px;cursor:pointer;color:var(--accent);font-size:11px;font-weight:600';
+      back.textContent = '← volver a búsqueda';
+      back.addEventListener('click', () => lcDoSearch());
+      results.appendChild(back);
+      const header = document.createElement('p');
+      header.style.cssText = 'margin:4px 8px 8px;font-size:9px;color:var(--ink-faint);letter-spacing:.1em;text-transform:uppercase';
+      header.textContent = `${escapeHTML(art.name)} — ${songs.length} canciones — click para importar`;
+      results.appendChild(header);
+      if (!songs.length) {
+        results.innerHTML += '<p style="margin:8px;color:var(--ink-faint);font-size:10px">Sin canciones encontradas.</p>';
+        return;
+      }
+      songs.forEach(s => {
+        results.appendChild(lcResultLine(s.title, () => lcImportSong(s, art)));
+      });
+    } catch(e) {
+      results.innerHTML = `<p style="margin:8px;color:#c0392b;font-size:10px">Error: ${escapeHTML(e.message)}</p>`;
+    }
+  }
+  async function lcImportSong(song, art) {
+    const results = $('lcResults');
+    const status = document.createElement('p');
+    status.style.cssText = 'margin:8px;color:var(--accent);font-size:10px';
+    status.textContent = `Bajando "${song.title}"…`;
+    results.prepend(status);
+    try {
+      // Resolver a la primera versión de "Letra y Acordes"
+      let songUrl = song.url;
+      if (!songUrl.endsWith('.shtml') && !songUrl.endsWith('.html')) {
+        try {
+          const indexHtml = await fetchViaProxy(songUrl);
+          const indexDoc = new DOMParser().parseFromString(indexHtml, 'text/html');
+          for (const a of indexDoc.querySelectorAll('a[href]')) {
+            if (a.textContent.trim() === 'Letra y Acordes' && a.getAttribute('href').includes('.shtml')) {
+              songUrl = new URL(a.getAttribute('href'), songUrl).href;
+              break;
+            }
+          }
+        } catch {}
+      }
+      const html = await fetchViaProxy(songUrl);
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const pres = doc.querySelectorAll('pre');
+      let content = '';
+      if (pres.length) {
+        content = [...pres].map(p => p.textContent).join('\n\n');
+      }
+      content = content.replace(/\n{4,}/g, '\n\n\n').trim() + '\n';
+      hideUrlModal();
+      openNewSong({ titulo: song.title, artista: art.name, url: songUrl, contenido: content });
+    } catch(e) {
+      status.style.color = '#c0392b';
+      status.textContent = `Error: ${e.message}`;
+    }
+  }
+  $('lcSearchGo').addEventListener('click', lcDoSearch);
 
   $('urlFetchGo').addEventListener('click', async () => {
     const url = $('urlInput').value.trim();
