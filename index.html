@@ -1751,6 +1751,18 @@
   const PIANO_INTERVALS = {
     '':[0,4,7],'maj':[0,4,7],'m':[0,3,7],'min':[0,3,7],'7':[0,4,7,10],'maj7':[0,4,7,11],'m7':[0,3,7,10],'min7':[0,3,7,10],
     'dim':[0,3,6],'dim7':[0,3,6,9],'aug':[0,4,8],'sus2':[0,2,7],'sus4':[0,5,7],'add9':[0,4,7,2],'6':[0,4,7,9],'9':[0,4,7,10,2],'sus':[0,5,7],
+    'm9':[0,3,7,10,2],'maj9':[0,4,7,11,2],'m6':[0,3,7,9],'m11':[0,3,7,10,2,5],'11':[0,4,7,10,2,5],
+    'm13':[0,3,7,10,2,9],'13':[0,4,7,10,2,9],'maj13':[0,4,7,11,2,9],
+    'm7b5':[0,3,6,10],'7sus4':[0,5,7,10],'9sus4':[0,5,7,10,2],
+  };
+  // Si una calidad rara no tiene template de guitarra, caemos a esta simplificación.
+  const QUALITY_FALLBACK = {
+    'm9':'m7','m11':'m7','m13':'m7','m6':'m',
+    '9':'7','11':'7','13':'7',
+    'maj9':'maj7','maj11':'maj7','maj13':'maj7',
+    'add9':'','add11':'','add13':'',
+    '7sus4':'sus4','9sus4':'sus4',
+    'm7b5':'dim',
   };
   const NOTE_IDX = {'C':0,'C#':1,'Db':1,'D':2,'D#':3,'Eb':3,'E':4,'F':5,'F#':6,'Gb':6,'G':7,'G#':8,'Ab':8,'A':9,'A#':10,'Bb':10,'B':11};
   function getPianoNotes(root, q) {
@@ -1788,25 +1800,33 @@
   }
   window.normalizeQ = normalizeQ;
   function getGuitarVoicings(root, quality, bass='') {
-    const q = normalizeQ(quality||''), key = root+'_'+q, vs = [];
-    // Slash chord lookup first, then regular, then major fallback
-    const slashKey = bass ? key+'/'+bass : null;
-    const open = (slashKey && OPEN_POS[slashKey]) || OPEN_POS[key] || (q==='' ? OPEN_POS[root+'_'] : null);
-    if (open) open.forEach(f => vs.push({frets:[...f], baseFret:1, label:'abierta'}));
-    // Only use barre templates that actually exist for this quality
-    const aF = A_FRET[root], aT = A_TMPL[q] || (q==='' ? A_TMPL[''] : null);
-    if (aF!==undefined && aT) {
-      if (aF>0) vs.push({frets:applyTmpl(aT,aF), baseFret:aF, label:'cejilla A '+aF});
-      else if (!open) vs.push({frets:applyTmpl(aT,0), baseFret:1, label:'abierta'});
-    }
-    const eF = E_FRET[root], eT = E_TMPL[q] || (q==='' ? E_TMPL[''] : null);
-    if (eF!==undefined && eT) {
-      if (eF>0) vs.push({frets:applyTmpl(eT,eF), baseFret:eF, label:'cejilla E '+eF});
-      else if (!open && aF!==0) vs.push({frets:applyTmpl(eT,0), baseFret:1, label:'abierta'});
-    }
-    const dF = D_FRET[root], dT = D_TMPL[q] || (q==='' ? D_TMPL[''] : null);
-    if (dF!==undefined && dT) {
-      if (dF>0 && !vs.some(v=>v.baseFret===dF)) vs.push({frets:applyTmpl(dT,dF), baseFret:dF, label:'pos. D '+dF});
+    const tryQ = (q) => {
+      const key = root+'_'+q, vs = [];
+      const slashKey = bass ? key+'/'+bass : null;
+      const open = (slashKey && OPEN_POS[slashKey]) || OPEN_POS[key] || (q==='' ? OPEN_POS[root+'_'] : null);
+      if (open) open.forEach(f => vs.push({frets:[...f], baseFret:1, label:'abierta'}));
+      const aF = A_FRET[root], aT = A_TMPL[q] || (q==='' ? A_TMPL[''] : null);
+      if (aF!==undefined && aT) {
+        if (aF>0) vs.push({frets:applyTmpl(aT,aF), baseFret:aF, label:'cejilla A '+aF});
+        else if (!open) vs.push({frets:applyTmpl(aT,0), baseFret:1, label:'abierta'});
+      }
+      const eF = E_FRET[root], eT = E_TMPL[q] || (q==='' ? E_TMPL[''] : null);
+      if (eF!==undefined && eT) {
+        if (eF>0) vs.push({frets:applyTmpl(eT,eF), baseFret:eF, label:'cejilla E '+eF});
+        else if (!open && aF!==0) vs.push({frets:applyTmpl(eT,0), baseFret:1, label:'abierta'});
+      }
+      const dF = D_FRET[root], dT = D_TMPL[q] || (q==='' ? D_TMPL[''] : null);
+      if (dF!==undefined && dT) {
+        if (dF>0 && !vs.some(v=>v.baseFret===dF)) vs.push({frets:applyTmpl(dT,dF), baseFret:dF, label:'pos. D '+dF});
+      }
+      return vs;
+    };
+    const q = normalizeQ(quality||'');
+    let vs = tryQ(q);
+    // Si no hay voicings para la calidad exacta, probar la simplificación.
+    if (!vs.length && QUALITY_FALLBACK[q] !== undefined) {
+      const fb = QUALITY_FALLBACK[q];
+      vs = tryQ(fb).map(v => ({...v, label: v.label + ' (≈'+(quality||'')+')'}));
     }
     return vs.slice(0,5);
   }

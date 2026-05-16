@@ -1,6 +1,6 @@
 {
   "iniciado": "2026-05-09 18:52:24",
-  "actualizado": "2026-05-16 18:03:30",
+  "actualizado": "2026-05-16 18:50:38",
   "artistas_completados": [
     "abel_pintos",
     "adn_argentina",
@@ -136,9 +136,18 @@
     "jovenes_pordioseros",
     "juan_gabriel",
     "juana_molina",
-    "juanes"
+    "juanes",
+    "julieta_venegas",
+    "julio_sosa",
+    "kapanga",
+    "ke_personajes",
+    "lali_esposito",
+    "leon_gieco",
+    "liliana_herrero",
+    "litto_nebbia",
+    "luciano_pereyra"
   ],
   "artistas_pendientes": [],
   "artistas_error": {},
-  "total_canciones": 9789
+  "total_canciones": 10368
 }
