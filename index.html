@@ -3085,9 +3085,28 @@
 <script>
   // === PWA: registro del service worker ===
   if ('serviceWorker' in navigator) {
+    // Si ya había un SW controlando, un cambio de controller = versión nueva.
+    // En la primera instalación (sin controller previo) no recargamos.
+    const _hadController = !!navigator.serviceWorker.controller;
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(err => {
-        console.warn('SW no se pudo registrar:', err);
+      // updateViaCache:'none' => el navegador NUNCA usa su caché HTTP para sw.js
+      // ni para version.js (importScripts), así detecta cada release nuevo.
+      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+        .then(reg => {
+          reg.update();  // chequeo proactivo al abrir
+          // Revisar de nuevo cada vez que la pestaña vuelve a foco
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') reg.update();
+          });
+        })
+        .catch(err => console.warn('SW no se pudo registrar:', err));
+
+      // Cuando el SW nuevo toma el control, recargamos una sola vez para mostrarlo.
+      let _reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (_reloaded || !_hadController) return;
+        _reloaded = true;
+        location.reload();
       });
     });
   }
