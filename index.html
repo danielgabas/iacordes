@@ -2881,6 +2881,30 @@
     }
   }
 
+  // ─── Compresión gzip (Compression Streams API) ───
+  // La biblioteca de canciones es texto muy repetitivo => comprime ~10x.
+  // Sin esto, 41 MB crudos hacen que Cloudflare devuelva 525 al leer/escribir.
+  const _hasGzip = typeof CompressionStream !== 'undefined';
+  function _bufToB64(buf) {
+    let bin = ''; const bytes = new Uint8Array(buf); const CH = 0x8000;
+    for (let i = 0; i < bytes.length; i += CH) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CH));
+    return btoa(bin);
+  }
+  function _b64ToBuf(b64) {
+    const bin = atob(b64); const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes.buffer;
+  }
+  async function gzipToStr(str) {
+    const stream = new Blob([str]).stream().pipeThrough(new CompressionStream('gzip'));
+    const buf = await new Response(stream).arrayBuffer();
+    return 'gz:' + _bufToB64(buf);
+  }
+  async function gunzipFromStr(s) {
+    const stream = new Blob([_b64ToBuf(s.slice(3))]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return await new Response(stream).text();
+  }
+
   // ─── Leer/escribir localStorage bulk ───
   async function snapshotLocal() {
     const snap = {};
@@ -2891,8 +2915,10 @@
     }
     // cc_songs desde IndexedDB (con fallback a localStorage por migración en curso)
     const songs = await window.SongStore.load();
-    if (songs != null) snap.cc_songs = JSON.stringify(songs);
-    else { const raw = localStorage.getItem('cc_songs'); if (raw !== null) snap.cc_songs = raw; }
+    let json = null;
+    if (songs != null) json = JSON.stringify(songs);
+    else { const raw = localStorage.getItem('cc_songs'); if (raw !== null) json = raw; }
+    if (json != null) snap.cc_songs = _hasGzip ? await gzipToStr(json) : json;
     return snap;
   }
   async function applySnapshot(snap) {
@@ -2900,9 +2926,14 @@
       if (k === 'cc_songs') continue;
       if (snap[k] !== undefined) localStorage.setItem(k, snap[k]);
     }
-    // cc_songs va a IndexedDB; silent para no disparar otra subida
+    // cc_songs va a IndexedDB; silent para no disparar otra subida.
+    // Soporta tanto el formato gzip ('gz:...') como JSON plano (compat. hacia atrás).
     if (snap.cc_songs !== undefined) {
-      try { await window.SongStore.save(JSON.parse(snap.cc_songs), { silent: true }); } catch {}
+      try {
+        const v = snap.cc_songs;
+        const json = (typeof v === 'string' && v.startsWith('gz:')) ? await gunzipFromStr(v) : v;
+        await window.SongStore.save(JSON.parse(json), { silent: true });
+      } catch (e) { console.warn('No se pudo aplicar cc_songs:', e); }
     }
   }
 
@@ -2930,10 +2961,21 @@
   async function initialSync() {
     setBtnState('syncing');
     try {
-      const remote = await fetchRemote();
-      const localSnap = await snapshotLocal();
-      const hasLocalData = Object.keys(localSnap).length > 0 &&
-                           (localSnap.cc_songs && localSnap.cc_songs !== '[]' && localSnap.cc_songs !== 'null');
+      // ¿Hay canciones locales? Miramos los datos reales (no el snapshot comprimido).
+      let localSongs = await window.SongStore.load();
+      if (localSongs == null) { try { localSongs = JSON.parse(localStorage.getItem('cc_songs') || 'null'); } catch {} }
+      const hasLocalData = Array.isArray(localSongs) && localSongs.length > 0;
+
+      let remote;
+      try {
+        remote = await fetchRemote();
+      } catch (e) {
+        // La fila remota puede estar rota o ser gigante (Cloudflare 525 al leerla).
+        // Si tenemos datos locales, subimos comprimido y pisamos esa fila => se auto-repara.
+        console.warn('fetchRemote falló, intentando reparar:', e);
+        if (hasLocalData) { await uploadLocal(); setBtnState('synced'); updateModalStatus(); return; }
+        throw e;
+      }
 
       if (!remote) {
         // Supabase vacío: subimos lo que haya en local (aunque sea poco)
