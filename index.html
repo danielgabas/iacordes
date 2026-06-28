@@ -900,6 +900,49 @@
 
 <script src="version.js"></script>
 <script>
+/* ── Almacén grande en IndexedDB para la biblioteca de canciones ──────────────
+   localStorage tiene un techo de ~5 MB; las canciones se pasan de ahí.
+   IndexedDB no tiene ese límite, así que cc_songs vive acá. */
+(function(){
+  const DB='iacordes', STORE='kv', VER=1;
+  let _db=null;
+  function open(){
+    return new Promise((res,rej)=>{
+      if(_db) return res(_db);
+      const rq=indexedDB.open(DB,VER);
+      rq.onupgradeneeded=()=>{ const db=rq.result; if(!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE); };
+      rq.onsuccess=()=>{ _db=rq.result; res(_db); };
+      rq.onerror=()=>rej(rq.error);
+    });
+  }
+  async function get(key){
+    const db=await open();
+    return new Promise((res,rej)=>{
+      const rq=db.transaction(STORE,'readonly').objectStore(STORE).get(key);
+      rq.onsuccess=()=>res(rq.result===undefined?null:rq.result);
+      rq.onerror=()=>rej(rq.error);
+    });
+  }
+  async function set(key,val){
+    const db=await open();
+    return new Promise((res,rej)=>{
+      const tx=db.transaction(STORE,'readwrite');
+      tx.objectStore(STORE).put(val,key);
+      tx.oncomplete=()=>res();
+      tx.onerror=()=>rej(tx.error);
+    });
+  }
+  window.idbKV={get,set};
+  window.SongStore={
+    load(){ return get('cc_songs'); },
+    async save(songs, opts){
+      await set('cc_songs', songs);
+      if(!(opts && opts.silent)) window.dispatchEvent(new CustomEvent('cc-songs-changed'));
+    }
+  };
+})();
+</script>
+<script>
 (function() {
   "use strict";
 
@@ -921,6 +964,9 @@
     save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
   };
   window.LS = LS;
+
+  // Persistencia de canciones: va a IndexedDB (sin límite de 5 MB) y avisa al sync.
+  function saveSongs() { SongStore.save(state.songs); }
 
   const $ = id => document.getElementById(id);
   window.$ = $;
@@ -1655,7 +1701,7 @@
     state.songs = songs.map(normalizeSong).filter(s => s.contenido.trim());
     state.filtered = [...state.songs];
     state.currentIndex = state.songs.length ? 0 : -1;
-    LS.save('cc_songs', state.songs);
+    saveSongs();
     applySearch();
     if (state.currentIndex >= 0) selectSong(0); else renderReader();
   }
@@ -1718,7 +1764,7 @@
         });
         saveCats();
       }
-      LS.save('cc_songs', state.songs);
+      saveSongs();
       state.filtered = [...state.songs];
       applySearch();
       if (state.currentIndex < 0 && state.songs.length) selectSong(0);
@@ -1939,7 +1985,7 @@
   function openNewSong(prefill = {}) {
     const newSong = { titulo: '', artista: '', url: '', audioUrl: '', contenido: '', ...prefill };
     state.songs.unshift(newSong);
-    LS.save('cc_songs', state.songs);
+    saveSongs();
     state.filtered = [...state.songs];
     applySearch();
     selectSong(0);
@@ -2005,7 +2051,7 @@
     const results = $('lcResults');
     results.innerHTML = '<p style="margin:8px;color:var(--ink-faint);font-size:10px">Buscando…</p>';
     try {
-      const html = await fetchViaProxy('https://acordes.lacuerda.net/buscar/?q=' + encodeURIComponent(q));
+      const html = await fetchViaProxy('https://acordes.lacuerda.net/busca.php?exp=' + encodeURIComponent(q));
       const doc = new DOMParser().parseFromString(html, 'text/html');
       const artists = [];
       const seen = new Set();
@@ -2274,7 +2320,7 @@
     state.songs = state.songs.filter(s => !libSelected.has(songKey(s)));
     libSelected.forEach(k => delete state.songCats[k]);
     if (state.currentIndex >= state.songs.length) state.currentIndex = state.songs.length - 1;
-    LS.save('cc_songs', state.songs);
+    saveSongs();
     saveCats();
     state.filtered = [...state.songs];
     applySearch();
@@ -2460,7 +2506,7 @@
       const song = state.songs[state.currentIndex];
       if (!song.titulo && !song.contenido) {
         state.songs.splice(state.currentIndex, 1);
-        LS.save('cc_songs', state.songs);
+        saveSongs();
         state.filtered = [...state.songs];
         state.currentIndex = state.songs.length ? 0 : -1;
         applySearch();
@@ -2479,7 +2525,7 @@
     const sk = songKey(song);
     if (editSelCats.size) state.songCats[sk] = [...editSelCats];
     else delete state.songCats[sk];
-    LS.save('cc_songs', state.songs);
+    saveSongs();
     saveCats();
     closeEdit();
     applySearch();
@@ -2538,13 +2584,26 @@
   applyTheme(); updateFontLabel(); updateTransposeLabel();
   if (state.instrument==='piano') { $('pianoBtn').classList.add('active'); $('guitarBtn').classList.remove('active'); }
   initPopup();
-  const saved = LS.load('cc_songs',null);
-  if (saved&&Array.isArray(saved)&&saved.length) {
-    // migrar: re-extraer artista de URL para canciones que lo tienen mal
-    state.songs = saved.map(s => s.url ? { ...s, artista: artistFromUrl(s.url) || s.artista } : s);
-    LS.save('cc_songs', state.songs);
-    state.filtered=[...state.songs]; state.currentIndex=0; applySearch(); selectSong(0);
-  } else renderReader();
+  bootSongs();
+
+  async function bootSongs() {
+    let saved = await SongStore.load();
+    if (saved == null) {
+      // Migración desde localStorage (instalaciones previas a IndexedDB)
+      const legacy = LS.load('cc_songs', null);
+      if (legacy && Array.isArray(legacy) && legacy.length) {
+        saved = legacy;
+        await SongStore.save(legacy, { silent: true });
+        try { localStorage.removeItem('cc_songs'); } catch {}
+      }
+    }
+    if (saved && Array.isArray(saved) && saved.length) {
+      // migrar: re-extraer artista de URL para canciones que lo tienen mal
+      state.songs = saved.map(s => s.url ? { ...s, artista: artistFromUrl(s.url) || s.artista } : s);
+      await SongStore.save(state.songs, { silent: true });
+      state.filtered=[...state.songs]; state.currentIndex=0; applySearch(); selectSong(0);
+    } else renderReader();
+  }
 })();
 
 // ── Custom Chord Editor ────────────────────────────────────────────────────────
@@ -2823,17 +2882,27 @@
   }
 
   // ─── Leer/escribir localStorage bulk ───
-  function snapshotLocal() {
+  async function snapshotLocal() {
     const snap = {};
     for (const k of SYNC_KEYS) {
+      if (k === 'cc_songs') continue;  // cc_songs vive en IndexedDB, se agrega abajo
       const v = localStorage.getItem(k);
       if (v !== null) snap[k] = v;  // guardamos como string, así es exactamente lo que LS tiene
     }
+    // cc_songs desde IndexedDB (con fallback a localStorage por migración en curso)
+    const songs = await window.SongStore.load();
+    if (songs != null) snap.cc_songs = JSON.stringify(songs);
+    else { const raw = localStorage.getItem('cc_songs'); if (raw !== null) snap.cc_songs = raw; }
     return snap;
   }
-  function applySnapshot(snap) {
+  async function applySnapshot(snap) {
     for (const k of SYNC_KEYS) {
+      if (k === 'cc_songs') continue;
       if (snap[k] !== undefined) localStorage.setItem(k, snap[k]);
+    }
+    // cc_songs va a IndexedDB; silent para no disparar otra subida
+    if (snap.cc_songs !== undefined) {
+      try { await window.SongStore.save(JSON.parse(snap.cc_songs), { silent: true }); } catch {}
     }
   }
 
@@ -2849,7 +2918,7 @@
   }
 
   async function uploadLocal() {
-    const payload = snapshotLocal();
+    const payload = await snapshotLocal();
     const { error } = await sb
       .from('user_data')
       .upsert({ user_id: currentUser.id, data: payload }, { onConflict: 'user_id' });
@@ -2862,7 +2931,7 @@
     setBtnState('syncing');
     try {
       const remote = await fetchRemote();
-      const localSnap = snapshotLocal();
+      const localSnap = await snapshotLocal();
       const hasLocalData = Object.keys(localSnap).length > 0 &&
                            (localSnap.cc_songs && localSnap.cc_songs !== '[]' && localSnap.cc_songs !== 'null');
 
@@ -2871,7 +2940,7 @@
         await uploadLocal();
       } else if (!hasLocalData) {
         // Local vacío: bajamos lo remoto
-        applySnapshot(remote.data || {});
+        await applySnapshot(remote.data || {});
         localStorage.setItem(localMetaKey, JSON.stringify({ lastSync: Date.now() }));
         // Recargamos para que la app re-renderice con los datos nuevos
         location.reload();
@@ -2885,7 +2954,7 @@
         if (remoteTs > localTs + 2000) {
           // Lo remoto es más nuevo (margen de 2s para evitar ping-pong)
           if (confirm('Hay datos más nuevos en la nube. ¿Querés bajarlos y pisar los locales?\n\n(Si cancelás, subimos tu versión local y pisamos la de la nube.)')) {
-            applySnapshot(remote.data || {});
+            await applySnapshot(remote.data || {});
             localStorage.setItem(localMetaKey, JSON.stringify({ lastSync: Date.now() }));
             location.reload();
             return;
@@ -2938,6 +3007,8 @@
     origRemoveItem(k);
     if (SYNC_KEYS.includes(k)) scheduleSync();
   };
+  // cc_songs ya no pasa por localStorage (vive en IndexedDB): escuchamos su evento
+  window.addEventListener('cc-songs-changed', () => scheduleSync());
 
   // ─── Auth flow ───
   async function init() {
